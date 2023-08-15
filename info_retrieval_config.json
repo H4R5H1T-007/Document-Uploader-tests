@@ -1,0 +1,6 @@
+{
+    "method" : "instructor",
+    "openai_key" : "Add your api key here.",
+    "batch_size" : 32,
+    "huggingface_model" : "hkunlp/instructor-large"
+}

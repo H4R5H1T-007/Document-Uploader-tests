@@ -1,0 +1,7 @@
+{
+    "model" : "entropy",
+    "huggingface_model" : "all-mpnet-base-v2",
+    "batch_size" : 32,
+    "chunk_overlap" : 0,
+    "max_chunk_length" : 4096
+}

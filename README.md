@@ -1,0 +1,1 @@
+# Automated tests for Text Segmentation and Information retrievals
