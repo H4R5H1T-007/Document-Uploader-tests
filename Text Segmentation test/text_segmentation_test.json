@@ -1,0 +1,5 @@
+{
+    "number_of_samples": 10,
+    "dataset_location" : "./choi_dataset.csv",
+    "window_width" : 5
+}
