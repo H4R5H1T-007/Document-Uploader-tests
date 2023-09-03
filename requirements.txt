@@ -1,0 +1,12 @@
+sentence_transformers 
+openai 
+langchain
+nltk
+scikit-learn
+numpy
+scipy
+torch
+InstructorEmbedding
+pandas
+PyPDF2
+ranx

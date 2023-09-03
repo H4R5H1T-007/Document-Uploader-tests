@@ -2,6 +2,8 @@ import sys
 sys.path.append('../')
 import openai
 import random
+import os
+import pandas as pd
 
 from text_segmentation_model import Splitter
 from info_retrieval_model import Retriever
@@ -15,6 +17,21 @@ random.seed(0)
 number_of_queries = test_config['num_of_queries']
 number_of_results = test_config['num_of_res']
 pdf_path = test_config['pdf_path']
+
+def pdf_to_text(pdf_path):
+    with open(pdf_path, 'rb') as f:
+        pdf_reader = PyPDF2.PdfReader(f)
+        text = ''
+        for page_num in range(len(pdf_reader.pages)):
+            page = pdf_reader.pages[page_num]
+            text += page.extract_text()
+    return text
+
+doc_text = pdf_to_text(pdf_path)
+
+splitter = Splitter(doc_text)
+text_corpus = splitter.predict()
+retriever = Retriever(text_corpus)
 
 def query_creator(paragraph : str) -> str:
     # Generate the response using ChatGPT
@@ -34,39 +51,43 @@ def query_bank_creator(text_chunks : list[str], number_of_samples : int = 10) ->
     query_bank = list()
     if number_of_samples > len(text_chunks):
         raise ValueError("number of samples cannot be greater than the length of the list.")
-    sampled_paragraphs = random.sample(text_chunks, number_of_samples)
-    for paragraph in sampled_paragraphs:
-        question = query_creator(paragraph)
-        query_bank.append([paragraph, question])
+    
+    file_path = f"./generated_questions/{str(splitter)}_{number_of_queries}.csv"
+    if(not os.path.exists(file_path)):
+        sampled_paragraphs = random.sample(text_chunks, number_of_samples)
+        for paragraph in sampled_paragraphs:
+            question = query_creator(paragraph)
+            query_bank.append([paragraph, question])
+        
+        # paragraph = [x[0] for x in query_bank]
+        # query = [x[1] for x in query_bank]
+
+        # data = pd.DataFrame({key: value for query_bank in [paragraph, query] for key, value in zip(('paragraph', 'query'), query_bank)})
+        data = pd.DataFrame(query_bank, columns=["paragraph", "query"])
+
+        data.to_csv(file_path)
+
+    else:
+        print(f'Already generated questions are taken from file {file_path}')
+        data = pd.read_csv(file_path, index_col=0)
+        query_bank = [[x, y] for x, y in zip(data['paragraph'].to_list(), data['query'].to_list())]
+
+        
     return query_bank
 
 def test_suite_creator(
-        splitter,
+        chunks,
         number_of_samples=number_of_queries
     ):
-    # doc_text = pdf_to_text(path_to_pdf)
-    # splitter = Splitter(doc_text)
-    chunks = splitter.predict()
 
     print(f"Now creating queries from randomly sampled {number_of_samples} samples using chatGPT api :-")
     queries_with_paragraphs = query_bank_creator(chunks, number_of_samples)
     # queries_with_paragraphs = [[paragraph, generated_query]]
-    return chunks, queries_with_paragraphs
+    return queries_with_paragraphs
 
-def pdf_to_text(pdf_path):
-    with open(pdf_path, 'rb') as f:
-        pdf_reader = PyPDF2.PdfReader(f)
-        text = ''
-        for page_num in range(len(pdf_reader.pages)):
-            page = pdf_reader.pages[page_num]
-            text += page.extract_text()
-    return text
 
-doc_text = pdf_to_text(pdf_path)
+test_set = test_suite_creator(text_corpus, number_of_queries)
 
-splitter = Splitter(doc_text)
-text_corpus, test_set = test_suite_creator(splitter, number_of_queries)
-retriever = Retriever(text_corpus)
 
 def text_id_generator(text_corpus):
     result = dict()
