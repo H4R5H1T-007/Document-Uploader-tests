@@ -1,5 +1,8 @@
 sentence_transformers 
 openai 
+tiktoken
+faiss-cpu
+lama-index
 langchain
 nltk
 scikit-learn
